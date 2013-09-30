@@ -336,10 +336,10 @@ bool xptProxy_submitData(char* workername, uint8* blockData, uint32 blockDataLen
 		xptShareToSubmit_t* xptShare = (xptShareToSubmit_t*)malloc(sizeof(xptShareToSubmit_t));
 		memset(xptShare, 0x00, sizeof(xptShareToSubmit_t));
 		xptShare->algorithm = xpc->algorithm;
-		xptShare->version = _swapEndianessU32(*(uint32*)(blockData+0));
-		xptShare->nTime = _swapEndianessU32(*(uint32*)(blockData+4+32+32));
-		xptShare->nonce = _swapEndianessU32(*(uint32*)(blockData+12+32+32));
-		xptShare->nBits = _swapEndianessU32(*(uint32*)(blockData+8+32+32));
+		xptShare->version = (*(uint32*)(blockData+0));
+		xptShare->nTime = (*(uint32*)(blockData+4+32+32));
+		xptShare->nonce = (*(uint32*)(blockData+12+32+32));
+		xptShare->nBits = (*(uint32*)(blockData+8+32+32));
 		memcpy(xptShare->prevBlockHash, blockData+4, 32);
 		memcpy(xptShare->merkleRoot, blockData+4+32, 32);
 		memcpy(xptShare->merkleRootOriginal, merklerootOriginal, 32);

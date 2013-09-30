@@ -62,13 +62,13 @@ void jsonRpc_processRequest_getwork_sendWorkData(jsonRpcServer_t* jrs, jsonRpcCl
 	uint8 blockRawData[512];
 	// update timestamp (todo) and set nonce to zero per default
 	uint32 newTimestamp = workData->nTime;
-	*(uint32*)(blockRawData+4+32+32) = _swapEndianessU32(newTimestamp);
+	*(uint32*)(blockRawData+4+32+32) = (newTimestamp);
 	uint32 newNonce = 0; // always zero
-	*(uint32*)(blockRawData+12+32+32) = _swapEndianessU32(newNonce);
+	*(uint32*)(blockRawData+12+32+32) = (newNonce);
 	// set block version
-	*(uint32*)(blockRawData+0) = _swapEndianessU32(workData->version);
+	*(uint32*)(blockRawData+0) = (workData->version);
 	// set block nBits
-	*(uint32*)(blockRawData+8+32+32) = _swapEndianessU32(workData->nBits);
+	*(uint32*)(blockRawData+8+32+32) = (workData->nBits);
 	// set prevblockhash and merkleroot
 	memcpy(blockRawData+4, workData->prevBlockHash, 32);
 	memcpy(blockRawData+4+32, workData->merkleRoot, 32);
