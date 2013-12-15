@@ -6,7 +6,7 @@ char* minerVersionString = "xptProxy v0.1";
 int main()
 {
 	printf("\xC9\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xBB\n");
-	printf("\xBA  xptProxy (v0.1)                                 \xBA\n");
+	printf("\xBA  xptProxy (v0.1c)                                \xBA\n");
 	printf("\xBA  contributors: jh                                \xBA\n");
 	printf("\xBA  local protocols: getwork(8332)                  \xBA\n");
 	printf("\xBA  algorithms: scrypt                              \xBA\n");
@@ -47,6 +47,7 @@ int main()
 	}
 	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)jsonRpc_run, jrs, 0, NULL);
 	// start processing xpt clients
+	printf("xptProxy ready to accept connections!\n");
 	xptProxy_mainloop();
 	return 0;
 }

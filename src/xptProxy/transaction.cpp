@@ -37,25 +37,19 @@ void bitclient_generateTxHash(uint32 userExtraNonceLength, uint8* userExtraNonce
 	uint8* transactionData = (uint8*)streamEx_map(streamTXData, &transactionDataLength);
 	// special case, we can use the hash of the transaction
 	uint8 hashOut[32];
-	sha256_context sha256_ctx;
-	sha256_starts(&sha256_ctx);
-	sha256_update(&sha256_ctx, transactionData, transactionDataLength);
-	sha256_finish(&sha256_ctx, hashOut);
-	sha256_starts(&sha256_ctx);
-	sha256_update(&sha256_ctx, hashOut, 32);
-	sha256_finish(&sha256_ctx, txHash);
+	sha256_context sctx;
+	sha256_starts(&sctx);
+	sha256_update(&sctx, transactionData, transactionDataLength);
+	sha256_finish(&sctx, hashOut);
+	sha256_starts(&sctx);
+	sha256_update(&sctx, hashOut, 32);
+	sha256_finish(&sctx, txHash);
 	free(transactionData);
 	stream_destroy(streamTXData);
 }
 
-void bitclient_calculateMerkleRoot(uint8* txHashes, uint32 numberOfTxHashes, uint8 merkleRoot[32])
+void bitclient_calculateMerkleRoot(uint8* txHashes, uint32 numberOfTxHashes, uint8* merkleRoot)
 {
-	if( numberOfTxHashes > 32 )
-	{
-		// we only support 32 transactions at a time
-		printf("bitclient_calculateMerkleRoot: Too many transactions, numberOfTx set to 32\n");
-		numberOfTxHashes = 32;
-	}
 	if(numberOfTxHashes <= 0 )
 	{
 		printf("bitclient_calculateMerkleRoot: Block has zero transactions (not even coinbase)\n");
@@ -71,10 +65,10 @@ void bitclient_calculateMerkleRoot(uint8* txHashes, uint32 numberOfTxHashes, uin
 	else
 	{
 		// build merkle root tree
-		uint8 hashData[256*32]; // space for 256 hashes
+		uint8* hashData = (uint8*)malloc(32*(numberOfTxHashes+1)*2+32*128); // space for tx hashes and tree + extra space just to be safe
 		uint32 hashCount = 0; // number of hashes written to hashData
 		uint32 hashReadIndex = 0; // index of currently processed hash
-		uint32 layerSize[10] = {0}; // up to 16 layers (which means 2^10 hashes are possible)
+		uint32 layerSize[16] = {0}; // up to 16 layers (which means 2^16 hashes are possible)
 		layerSize[0] = numberOfTxHashes;
 		for(uint32 i=0; i<numberOfTxHashes; i++)
 		{
@@ -94,6 +88,7 @@ void bitclient_calculateMerkleRoot(uint8* txHashes, uint32 numberOfTxHashes, uin
 			if( layerSize[f] == 0 )
 			{
 				printf("bitclient_calculateMerkleRoot: Error generating merkleRoot hash\n");
+				free(hashData);
 				return;
 			}
 			else if( layerSize[f] == 1 )
@@ -101,6 +96,7 @@ void bitclient_calculateMerkleRoot(uint8* txHashes, uint32 numberOfTxHashes, uin
 				// result found
 				memcpy(merkleRoot, hashData+(hashReadIndex*32), 32);
 				hashReadIndex++;
+				free(hashData);
 				return;
 			}
 			for(uint32 i=0; i<layerSize[f]; i += 2)
@@ -125,5 +121,6 @@ void bitclient_calculateMerkleRoot(uint8* txHashes, uint32 numberOfTxHashes, uin
 				hashCount++;
 			}
 		}
+		free(hashData);
 	}
 }

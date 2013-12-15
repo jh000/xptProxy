@@ -235,8 +235,8 @@ void xptProxy_tryGenerateWork(char* workername, char* workerpass, xptProxyWorkDa
 				// copy work data
 				workData->height = xpc->xptClient->blockWorkInfo.height;
 				workData->version = xpc->xptClient->blockWorkInfo.version;
-				uint32 timeBias = time(NULL) - xpc->xptClient->blockWorkInfo.timeWork;
-				workData->nTime = xpc->xptClient->blockWorkInfo.nTime + timeBias;
+				//uint32 timeBias = time(NULL) - xpc->xptClient->blockWorkInfo.timeWork;
+				workData->nTime = (uint32)time(NULL)+xpc->xptClient->blockWorkInfo.timeBias;
 				workData->nBits = xpc->xptClient->blockWorkInfo.nBits;
 				memcpy(workData->merkleRootOriginal, xpc->xptClient->blockWorkInfo.merkleRoot, 32);
 				memcpy(workData->prevBlockHash, xpc->xptClient->blockWorkInfo.prevBlockHash, 32);

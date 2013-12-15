@@ -44,7 +44,7 @@ static uint32 _swapEndianessU32(uint32 v)
 
 static void __debug__printHex(uint8* hexStr, int len)
 {
-	for(uint32 i=0; i<len; i++)
+	for(sint32 i=0; i<len; i++)
 	{
 		printf("%02x", hexStr[i]);
 	}

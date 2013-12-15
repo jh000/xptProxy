@@ -68,10 +68,10 @@ bool xptClient_processPacket_blockData1(xptClient_t* xptClient)
 	xptClient->blockWorkInfo.txHashCount = xptPacketbuffer_readU16(xptClient->recvBuffer, &recvError);
 	for(uint32 i=0; i<xptClient->blockWorkInfo.txHashCount; i++)
 	{
-		xptPacketbuffer_readData(xptClient->recvBuffer, xptClient->blockWorkInfo.txHashes+(32*(i+1)), 32, &recvError);
+		xptPacketbuffer_readData(xptClient->recvBuffer, xptClient->blockWorkInfo.txHashes+(32*(i+1)), 32, &recvError); // first entry stays empty because it is filled with dynamic coinbase tx
 		// The first hash in xptClient->blockWorkInfo.txHashes is reserved for the coinbase transaction
 	}
-	xptClient->blockWorkInfo.timeWork = time(NULL);
+	xptClient->blockWorkInfo.timeBias = (uint32)xptClient->blockWorkInfo.nTime-(uint32)time(NULL);
 	xptClient->hasWorkData = true;
 	// add general block info (primecoin new pow for xpt v4, removed in xpt v5)
 	//EnterCriticalSection(&xptClient->cs_workAccess);

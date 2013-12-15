@@ -366,6 +366,7 @@ int jsonRpc_run(jsonRpcServer_t* jrs)
 					// remove from list
 					jrs->list_connections->objects[i] = jrs->list_connections->objects[jrs->list_connections->objectCount-1];
 					jrs->list_connections->objectCount--;
+					i--;
 				}
 			}
 		}
