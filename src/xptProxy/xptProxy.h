@@ -27,5 +27,5 @@ typedef struct
 	uint8 merkleRootOriginal[32];
 }xptProxyWorkData_t;
 
-void xptProxy_tryGenerateWork(char* workername, char* workerpass, xptProxyWorkData_t* workData);
+void xptProxy_tryGenerateWork(char* workername, char* workerpass, xptProxyWorkData_t* workData, bool generateOnlyBlockHeader=false);
 bool xptProxy_submitData(char* workername, uint8* blockData, uint32 blockDataLength);

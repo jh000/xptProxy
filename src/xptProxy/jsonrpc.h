@@ -123,6 +123,12 @@ typedef struct _jsonRpcClient_t
 	// last request data
 	jsonObject_t* lastRequestJsonData; // complete request json object
 	jsonObject_t* lastRequestJsonParameter; // points to parameters
+	// temporary data available while processing request
+	char*  callPath; // relative path, usually just '/'
+	sint32 callPathLength;
+	// long poll data
+	bool longpollActive;
+	uint32 longpollBlockHeight;
 }jsonRpcClient_t;
 
 typedef struct _jsonRpcServer_t 

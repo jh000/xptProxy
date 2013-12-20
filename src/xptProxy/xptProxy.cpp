@@ -179,7 +179,7 @@ void xptProxy_freeConnectionObject(xptProxyConnection_t* xpc)
 /*
  * All-in-one command, for connect->xpt_getwork->generate_work
  */
-void xptProxy_tryGenerateWork(char* workername, char* workerpass, xptProxyWorkData_t* workData)
+void xptProxy_tryGenerateWork(char* workername, char* workerpass, xptProxyWorkData_t* workData, bool generateOnlyBlockHeader)
 {
 	// find worker entry
 	EnterCriticalSection(&cs_proxyConnections);
@@ -243,14 +243,17 @@ void xptProxy_tryGenerateWork(char* workername, char* workerpass, xptProxyWorkDa
 				memcpy(workData->target, xpc->xptClient->blockWorkInfo.target, 32);
 				memcpy(workData->targetShare, xpc->xptClient->blockWorkInfo.targetShare, 32);
 				// generate unique work from custom extra nonce
-				uint32 userExtraNonce = xpc->coinbaseSeed;
-				xpc->coinbaseSeed++;
-				bitclient_generateTxHash(sizeof(uint32), (uint8*)&userExtraNonce, xpc->xptClient->blockWorkInfo.coinBase1Size, xpc->xptClient->blockWorkInfo.coinBase1, xpc->xptClient->blockWorkInfo.coinBase2Size, xpc->xptClient->blockWorkInfo.coinBase2, xpc->xptClient->blockWorkInfo.txHashes);
-				bitclient_calculateMerkleRoot(xpc->xptClient->blockWorkInfo.txHashes, xpc->xptClient->blockWorkInfo.txHashCount+1, workData->merkleRoot);
-				workData->errorCode = 0;
+				if( generateOnlyBlockHeader == false )
+				{
+					uint32 userExtraNonce = xpc->coinbaseSeed;
+					xpc->coinbaseSeed++;
+					bitclient_generateTxHash(sizeof(uint32), (uint8*)&userExtraNonce, xpc->xptClient->blockWorkInfo.coinBase1Size, xpc->xptClient->blockWorkInfo.coinBase1, xpc->xptClient->blockWorkInfo.coinBase2Size, xpc->xptClient->blockWorkInfo.coinBase2, xpc->xptClient->blockWorkInfo.txHashes);
+					bitclient_calculateMerkleRoot(xpc->xptClient->blockWorkInfo.txHashes, xpc->xptClient->blockWorkInfo.txHashCount+1, workData->merkleRoot);
+					xptProxyWorkCache_add(workData->merkleRoot, workData->merkleRootOriginal, sizeof(uint32), (uint8*)&userExtraNonce);
+				}
 				workData->shouldTryAgain = false;
+				workData->errorCode = 0;
 				xpc->timeCacheClear = GetTickCount() + CACHE_TIME_WORKER;
-				xptProxyWorkCache_add(workData->merkleRoot, workData->merkleRootOriginal, sizeof(uint32), (uint8*)&userExtraNonce);
 			}
 			else
 			{

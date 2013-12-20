@@ -83,9 +83,8 @@ void jsonRpc_processRequest_getwork_sendWorkData(jsonRpcServer_t* jrs, jsonRpcCl
 	fStr_appendFormatted(fStr_response, "\",\"target\":\"");
 	fStr_addHexString(fStr_response, workData->targetShare, 32);
 	fStr_appendFormatted(fStr_response, "\",\"algorithm\":\"scrypt:1024,1,1\"}");
-	// generate additional header fields used for extensions
-	char additionalHeaderData[512];
-	additionalHeaderData[0] = '\0';
+	// set header fields used for extensions
+	char* additionalHeaderData = "X-Long-Polling: /longpoll\r\n";
 	// send response
 	jsonRpc_sendResponseRaw(jrs, client, fStr_response, additionalHeaderData);
 }
@@ -100,6 +99,51 @@ void jsonRpc_processRequest_getwork(jsonRpcServer_t* jrs, jsonRpcClient_t* clien
 		client->httpAuthUsername[63] = '\0';
 	if( strlen(client->httpAuthPassword) > 64 )
 		client->httpAuthPassword[63] = '\0';
+	// ignore starting '/' of call path
+	if( client->callPathLength > 0 && client->callPath[0] == '/' )
+	{
+		client->callPath++;
+		client->callPathLength--;
+	}
+	// check if longpoll mode
+	if( client->longpollActive || (client->callPath && client->callPathLength >= 8 && memcmp(client->callPath, "longpoll", 8) == 0) )
+	{
+		// long poll mode
+		xptProxyWorkData_t workData = {0};
+		// check if we need to initate the request
+		if( client->longpollActive == false )
+		{
+			//printf("[DEBUG] Starting poll\n");
+			// generate work to get block height
+			xptProxy_tryGenerateWork(client->httpAuthUsername, client->httpAuthPassword, &workData, true);
+			if( workData.shouldTryAgain == true )
+			{
+				jsonRpc_delayRequestByTime(jrs, client, NULL, 500, jsonRpc_processRequest_getwork);
+				return;
+			}	
+			client->longpollActive = true;
+			client->longpollBlockHeight = workData.height;
+			jsonRpc_delayRequestByTime(jrs, client, NULL, 300, jsonRpc_processRequest_getwork);
+			return;
+		}
+		// after init, this method will be called with the same parameters every 300ms
+		xptProxy_tryGenerateWork(client->httpAuthUsername, client->httpAuthPassword, &workData, true);
+		if( workData.shouldTryAgain == true )
+		{
+			// connection problem or other xpt error
+			jsonRpc_delayRequestByTime(jrs, client, NULL, 500, jsonRpc_processRequest_getwork);
+			return;
+		}
+		if( client->longpollBlockHeight == workData.height )
+		{
+			// still same block, call this method again in 300ms
+			jsonRpc_delayRequestByTime(jrs, client, NULL, 300, jsonRpc_processRequest_getwork); // this method will get called again in 500ms
+			return;
+		}
+		printf("Longpoll detected new block height %d\n", workData.height);
+		client->longpollActive = false;
+	}
+	
 
 	// did the miner submit a share?
 	jsonObject_t* jsonClientData = jsonObject_getArrayElement(client->lastRequestJsonParameter, 0);
@@ -123,8 +167,8 @@ void jsonRpc_processRequest_getwork(jsonRpcServer_t* jrs, jsonRpcClient_t* clien
 					fStr_appendFormatted(fStr_response, "true");
 				else
 					fStr_appendFormatted(fStr_response, "false");
-				
-				jsonRpc_sendResponseRaw(jrs, client, fStr_response, NULL);
+				char* additionalHeaderData = "X-Long-Polling: /longpoll\r\n";
+				jsonRpc_sendResponseRaw(jrs, client, fStr_response, additionalHeaderData);
 				return;
 			}
 			else

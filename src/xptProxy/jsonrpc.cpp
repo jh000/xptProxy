@@ -289,6 +289,45 @@ bool jsonRpcServer_receiveData(jsonRpcServer_t* jrs, jsonRpcClient_t* client)
 		// process data (if header found and full packet received)
 		if( client->recvDataHeaderEnd != 0 && client->recvIndex >= client->recvDataSizeFull )
 		{
+			// parse http request header again
+			uint8* httpRequest = client->recvBuffer;
+			bool httpHeaderError = false;
+			if( (client->recvDataHeaderEnd-(httpRequest-client->recvBuffer)) > 4 && memcmp(httpRequest, "GET ", 4) == 0 )
+			{
+				// GET
+				httpRequest += 4;
+			}
+			else if( (client->recvDataHeaderEnd-(httpRequest-client->recvBuffer)) > 5 && memcmp(httpRequest, "POST ", 5) == 0 )
+			{
+				// POST
+				httpRequest += 5;
+			}
+			else
+			{
+				httpHeaderError = true;
+			}
+			// continue to parse path
+			char callPath[512];
+			sint32 callPathLength = 0;
+			if( httpHeaderError == false )
+			{
+				while( true )
+				{
+					if( client->recvDataHeaderEnd-(httpRequest-client->recvBuffer) <= 0 )
+						break;
+					if( *httpRequest == '?' || *httpRequest == ' ' || *httpRequest == '\r' )
+						break;
+					if( callPathLength < sizeof(callPath) )
+					{
+						callPath[callPathLength] = *httpRequest;
+						callPathLength++;
+					}
+					httpRequest++;
+				}
+			}
+			// setup temporary variables
+			client->callPath = callPath;
+			client->callPathLength = callPathLength;
 			// process request
 			jsonRpc_processRequest(jrs, client);
 			// wipe processed packet and shift remaining data back
@@ -379,6 +418,8 @@ int jsonRpc_run(jsonRpcServer_t* jrs)
 			jsonRpcClient_t* client = (jsonRpcClient_t*)simpleList_get(jrs->list_connections, i);
 			if( client->hasTimedDelay && currentTick >= client->timerDelay )
 			{
+				client->callPath = NULL;
+				client->callPathLength = 0;
 				client->hasTimedDelay = false;
 				client->delayedRequestData.delayActive = false;
 				client->delayedRequestData.jsonRpc_processRequest_handler(jrs, client, true);
