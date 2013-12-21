@@ -84,7 +84,7 @@ void jsonRpc_processRequest_getwork_sendWorkData(jsonRpcServer_t* jrs, jsonRpcCl
 	fStr_addHexString(fStr_response, workData->targetShare, 32);
 	fStr_appendFormatted(fStr_response, "\",\"algorithm\":\"scrypt:1024,1,1\"}");
 	// set header fields used for extensions
-	char* additionalHeaderData = "X-Long-Polling: /longpoll\r\n";
+	char* additionalHeaderData = "X-Long-Polling: /longpoll\r\nX-Roll-NTime: Y\r\n";
 	// send response
 	jsonRpc_sendResponseRaw(jrs, client, fStr_response, additionalHeaderData);
 }
@@ -122,6 +122,7 @@ void jsonRpc_processRequest_getwork(jsonRpcServer_t* jrs, jsonRpcClient_t* clien
 				return;
 			}	
 			client->longpollActive = true;
+			client->longpollStart = (uint32)time(NULL);
 			client->longpollBlockHeight = workData.height;
 			jsonRpc_delayRequestByTime(jrs, client, NULL, 300, jsonRpc_processRequest_getwork);
 			return;
@@ -134,13 +135,18 @@ void jsonRpc_processRequest_getwork(jsonRpcServer_t* jrs, jsonRpcClient_t* clien
 			jsonRpc_delayRequestByTime(jrs, client, NULL, 500, jsonRpc_processRequest_getwork);
 			return;
 		}
-		if( client->longpollBlockHeight == workData.height )
+		uint32 longpollPassedTime = (uint32)time(NULL) - client->longpollStart;
+		bool longpoolTimeout = (longpollPassedTime >= (8*60));
+		if( client->longpollBlockHeight == workData.height && longpoolTimeout == false )
 		{
-			// still same block, call this method again in 300ms
-			jsonRpc_delayRequestByTime(jrs, client, NULL, 300, jsonRpc_processRequest_getwork); // this method will get called again in 500ms
+			// still same block, call this method again in 200ms
+			jsonRpc_delayRequestByTime(jrs, client, NULL, 200, jsonRpc_processRequest_getwork);
 			return;
 		}
-		printf("Longpoll detected new block height %d\n", workData.height);
+		if( longpoolTimeout )
+			printf("Longpoll timed out (not an error)\n");
+		else
+			printf("Longpoll detected new block height %d\n", workData.height);
 		client->longpollActive = false;
 	}
 	
@@ -167,7 +173,7 @@ void jsonRpc_processRequest_getwork(jsonRpcServer_t* jrs, jsonRpcClient_t* clien
 					fStr_appendFormatted(fStr_response, "true");
 				else
 					fStr_appendFormatted(fStr_response, "false");
-				char* additionalHeaderData = "X-Long-Polling: /longpoll\r\n";
+				char* additionalHeaderData = "X-Long-Polling: /longpoll\r\nX-Roll-NTime: Y\r\n";
 				jsonRpc_sendResponseRaw(jrs, client, fStr_response, additionalHeaderData);
 				return;
 			}

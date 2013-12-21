@@ -1,12 +1,12 @@
 #include"global.h"
 
 proxySettings_t proxySettings = {0};
-char* minerVersionString = "xptProxy v0.2";
+char* minerVersionString = "xptProxy v0.2b";
 
 int main()
 {
 	printf("\xC9\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xCD\xBB\n");
-	printf("\xBA  xptProxy (v0.2)                                 \xBA\n");
+	printf("\xBA  xptProxy (v0.2b)                                \xBA\n");
 	printf("\xBA  contributors: jh                                \xBA\n");
 	printf("\xBA  local protocols: getwork(8332)+longpoll         \xBA\n");
 	printf("\xBA  algorithms: scrypt                              \xBA\n");

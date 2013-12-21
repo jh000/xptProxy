@@ -129,6 +129,7 @@ typedef struct _jsonRpcClient_t
 	// long poll data
 	bool longpollActive;
 	uint32 longpollBlockHeight;
+	uint32 longpollStart;
 }jsonRpcClient_t;
 
 typedef struct _jsonRpcServer_t 
